@@ -109,22 +109,52 @@ class _NavigationScreenState extends State<NavigationScreen> {
       ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _selectedIndex == 0 
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(Icons.home),
+            ),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.note),
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _selectedIndex == 1 
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(Icons.note),
+            ),
             label: 'Notes',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _selectedIndex == 2 
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(Icons.person),
+            ),
             label: 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         onTap: _onItemTapped,
       ),
     );
