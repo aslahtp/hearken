@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:flutter/services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -123,61 +124,101 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _copyToClipboard() async {
+    if (_serverResponse != null) {
+      await Clipboard.setData(ClipboardData(text: _serverResponse!));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Text copied to clipboard'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton.icon(
-            onPressed: _pickAudioFile,
-            icon: const Icon(Icons.audio_file),
-            label: const Text('Pick Audio File'),
-          ),
-          if (_selectedAudioName != null)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Text(
-                    'Selected: $_selectedAudioName',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _uploadAudioFile,
-                    icon: _isLoading 
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.upload),
-                    label: Text(_isLoading ? 'Processing...' : 'Process Audio'),
-                  ),
-                ],
-              ),
+    return SingleChildScrollView(  // Make entire content scrollable
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),  // Add some padding at top
+            ElevatedButton.icon(
+              onPressed: _pickAudioFile,
+              icon: const Icon(Icons.audio_file),
+              label: const Text('Pick Audio File'),
             ),
-          if (_serverResponse != null)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Server Response:',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(_serverResponse!),
-                    ],
+            if (_selectedAudioName != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Selected: $_selectedAudioName',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _uploadAudioFile,
+                      icon: _isLoading 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.upload),
+                      label: Text(_isLoading ? 'Processing...' : 'Process Audio'),
+                    ),
+                  ],
+                ),
+              ),
+            if (_serverResponse != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Server Response:',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.5,  // Limit height to 50% of screen
+                          ),
+                          child: SingleChildScrollView(  // Make response text scrollable
+                            child: SelectableText(  // Make text selectable
+                              _serverResponse!,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton.icon(
+                              onPressed: _copyToClipboard,
+                              icon: const Icon(Icons.copy),
+                              label: const Text('Copy'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+            const SizedBox(height: 24),  // Add some padding at bottom
+          ],
+        ),
       ),
     );
   }
