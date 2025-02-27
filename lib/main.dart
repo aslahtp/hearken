@@ -107,7 +107,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Hearken'),
       ),
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Theme.of(context).colorScheme.surface,

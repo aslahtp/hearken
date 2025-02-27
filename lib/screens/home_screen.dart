@@ -16,11 +16,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   String? _selectedAudioName;
   String? _serverResponse;
   bool _isLoading = false;
   Uint8List? _audioBytes;
+
+  @override
+  bool get wantKeepAlive => true;  // This ensures the state is kept alive
 
   Future<void> _pickAudioFile() async {
     try {
@@ -140,6 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);  // Required by AutomaticKeepAliveClientMixin
     return SingleChildScrollView(  // Make entire content scrollable
       child: Center(
         child: Column(
@@ -185,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Server Response:',
+                          'Audio Transcript:',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
