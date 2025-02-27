@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/profile_screen.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,68 +13,67 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Hearken',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 48, 222, 42),
-          brightness: Brightness.light,
-        ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 2,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        return MaterialApp(
+          title: 'Hearken',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: lightDynamic,
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              elevation: 2,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                elevation: 2,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+            cardTheme: CardTheme(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+            ),
           ),
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: darkDynamic,
+            brightness: Brightness.dark,
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              elevation: 2,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                elevation: 2,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+            cardTheme: CardTheme(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+            ),
           ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 2,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: const NavigationScreen(),
+          themeMode: ThemeMode.system,
+          home: const NavigationScreen(),
+        );
+      },
     );
   }
 }
@@ -120,7 +120,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 0 
-                  ? Theme.of(context).colorScheme.primaryContainer
+                  ? Theme.of(context).colorScheme.surfaceVariant
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -133,7 +133,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 1 
-                  ? Theme.of(context).colorScheme.primaryContainer
+                  ? Theme.of(context).colorScheme.surfaceVariant
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -146,7 +146,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 2 
-                  ? Theme.of(context).colorScheme.primaryContainer
+                  ? Theme.of(context).colorScheme.surfaceVariant
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),

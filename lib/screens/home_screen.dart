@@ -183,6 +183,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Card(
+                  elevation: 0,
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
