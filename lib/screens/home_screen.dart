@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     });
 
     try {
-      final uri = Uri.parse('http://176.20.0.103:5000/process-audio');
+      final uri = Uri.parse('http://176.20.0.92:5000/process-audio');
       
       final request = http.MultipartRequest('POST', uri);
       

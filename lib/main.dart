@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                 foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                 foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
@@ -124,7 +124,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 0 
-                  ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3)
+                  ? Theme.of(context).colorScheme.secondaryContainer
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -137,7 +137,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 1 
-                  ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3)
+                  ? Theme.of(context).colorScheme.secondaryContainer
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -150,7 +150,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedIndex == 2 
-                  ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3)
+                  ? Theme.of(context).colorScheme.secondaryContainer
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
               ),
