@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'dart:convert';
-import 'package:http/http.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:flutter/services.dart';
+import '../services/supabase_service.dart';
+import 'dart:io';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   String? _serverResponse;
   bool _isLoading = false;
   Uint8List? _audioBytes;
+  String? _audioUrl;
 
   @override
   bool get wantKeepAlive => true;  // This ensures the state is kept alive
@@ -41,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         setState(() {
           _audioBytes = bytes;
           _selectedAudioName = file.name;
+          _audioUrl = null;
+          _serverResponse = null;
         });
       }
     } catch (e) {
@@ -66,50 +68,24 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     });
 
     try {
-      final uri = Uri.parse('http://176.20.0.92:5000/process-audio');
-      
-      final request = http.MultipartRequest('POST', uri);
-      
-      // Add MIME type based on file extension
-      String mimeType = 'audio/mpeg'; // default to mp3
-      if (_selectedAudioName!.endsWith('.wav')) {
-        mimeType = 'audio/wav';
-      } else if (_selectedAudioName!.endsWith('.m4a')) {
-        mimeType = 'audio/m4a';
-      } else if (_selectedAudioName!.endsWith('.aac')) {
-        mimeType = 'audio/aac';
-      }
+      // Create a temporary file from bytes
+      final tempDir = Directory.systemTemp;
+      final tempFile = File('${tempDir.path}/${_selectedAudioName}');
+      await tempFile.writeAsBytes(_audioBytes!);
 
-      // Create form data
-      request.fields['filename'] = _selectedAudioName!;
+      // First upload to Supabase
+      final publicUrl = await SupabaseService().uploadAudio(tempFile);
       
-      final multipartFile = http.MultipartFile.fromBytes(
-        'audio',
-        _audioBytes!,
-        filename: _selectedAudioName,
-        contentType: MediaType.parse(mimeType),
-      );
+      // Delete the temporary file
+      await tempFile.delete();
 
-      request.files.add(multipartFile);
+      // Now process the audio URL
+      final transcript = await SupabaseService().processAudioUrl(publicUrl);
 
-      // Don't set Content-Type header manually, let it be set automatically
-      request.headers.addAll({
-        'Accept': '*/*',
+      setState(() {
+        _audioUrl = publicUrl;
+        _serverResponse = transcript;
       });
-
-      final streamedResponse = await request.send();
-
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        setState(() {
-          _serverResponse = responseData['transcript'] ?? responseData['message'];
-        });
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['error'] ?? 'Failed to upload file: ${response.statusCode}');
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

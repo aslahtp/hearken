@@ -3,8 +3,11 @@ import 'screens/home_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/profile_screen.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'services/supabase_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseService().initialize();
   runApp(const MyApp());
 }
 
