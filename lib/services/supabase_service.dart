@@ -252,6 +252,17 @@ class SupabaseService {
         // Use the already initialized Gemini service
         final markdownNotes = await _geminiService.processTranscript(transcript);
         
+        // Save the transcript and notes to Supabase
+        final currentUser = client.auth.currentUser;
+        if (currentUser != null) {
+          await saveNoteToDatabase(
+            title: 'Note ${DateTime.now().toString().substring(0, 16)}',
+            transcript: transcript,
+            notes: markdownNotes,
+            audioUrl: audioUrl,
+          );
+        }
+        
         return {
           'transcript': transcript,
           'notes': markdownNotes,
@@ -264,6 +275,99 @@ class SupabaseService {
     } catch (e) {
       print('Error processing audio: $e'); // Debug log
       throw Exception('Failed to process audio: $e');
+    }
+  }
+  
+  // Save note to Supabase database
+  Future<void> saveNoteToDatabase({
+    required String title,
+    required String transcript,
+    required String notes,
+    required String audioUrl,
+  }) async {
+    try {
+      final currentUser = client.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      await client.from('notes').insert({
+        'user_id': currentUser.id,
+        'title': title,
+        'transcript': transcript,
+        'notes': notes,
+        'audio_url': audioUrl,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      
+      print('Note saved successfully to database');
+    } catch (e) {
+      print('Error saving note to database: $e');
+      throw Exception('Failed to save note: $e');
+    }
+  }
+  
+  // Get all notes for the current user
+  Future<List<Map<String, dynamic>>> getUserNotes() async {
+    try {
+      final currentUser = client.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      final response = await client
+          .from('notes')
+          .select()
+          .eq('user_id', currentUser.id)
+          .order('created_at', ascending: false);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error fetching notes: $e');
+      throw Exception('Failed to fetch notes: $e');
+    }
+  }
+  
+  // Get a specific note by ID
+  Future<Map<String, dynamic>> getNoteById(String noteId) async {
+    try {
+      final currentUser = client.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      final response = await client
+          .from('notes')
+          .select()
+          .eq('id', noteId)
+          .eq('user_id', currentUser.id)
+          .single();
+      
+      return response;
+    } catch (e) {
+      print('Error fetching note: $e');
+      throw Exception('Failed to fetch note: $e');
+    }
+  }
+  
+  // Delete a note
+  Future<void> deleteNote(String noteId) async {
+    try {
+      final currentUser = client.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      await client
+          .from('notes')
+          .delete()
+          .eq('id', noteId)
+          .eq('user_id', currentUser.id);
+      
+      print('Note deleted successfully');
+    } catch (e) {
+      print('Error deleting note: $e');
+      throw Exception('Failed to delete note: $e');
     }
   }
 } 

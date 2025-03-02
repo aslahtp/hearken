@@ -91,6 +91,16 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         _serverResponse = transcript;
       });
 
+      // Show a success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Audio processed successfully and saved to your notes'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
       // Update notes through callback if provided
       if (widget.onNotesUpdated != null) {
         widget.onNotesUpdated!(

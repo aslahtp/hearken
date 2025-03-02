@@ -27,9 +27,10 @@ class GeminiService {
   Future<String> processTranscript(String transcript) async {
     try {
       final prompt = '''
-        Convert the following transcript into well-organized notes in markdown format.
-        Make it concise, clear, and well-structured with proper headings, bullet points, 
-        and emphasis where needed. Highlight key points and organize related information together.
+        The input is a transcribe of a lecture audio.
+        Convert it into a lecture note with markdown format supporting in obsidian.
+        Also list if any actionable items such as homework, assignments or tests are mentioned.
+        Enclose math notation inside \$\$ and code inside backticks.
 
         Transcript:
         $transcript
