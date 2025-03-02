@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   String? _selectedAudioName;
   Map<String, String>? _serverResponse;
   bool _isLoading = false;
+  String _processingStage = '';
   Uint8List? _audioBytes;
   String? _audioUrl;
 
@@ -66,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
 
     setState(() {
       _isLoading = true;
+      _processingStage = 'Preparing audio file';
       _serverResponse = null;
     });
 
@@ -75,18 +77,37 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
       final tempFile = File('${tempDir.path}/${_selectedAudioName}');
       await tempFile.writeAsBytes(_audioBytes!);
 
+      setState(() {
+        _processingStage = 'Uploading audio';
+      });
+
       // First upload to Supabase
       final publicUrl = await SupabaseService().uploadAudio(tempFile);
       
       // Delete the temporary file
       await tempFile.delete();
 
+      setState(() {
+        _processingStage = 'Transcribing audio';
+      });
+
       // Now process the audio URL
-      final transcript = await SupabaseService().processAudioUrl(publicUrl);
+      final transcript = await SupabaseService().processAudioUrl(
+        publicUrl,
+        onAiStageChange: (stage) {
+          if (mounted) {
+            setState(() {
+              _processingStage = stage;
+            });
+          }
+        },
+      );
 
       setState(() {
         _audioUrl = publicUrl;
         _serverResponse = transcript;
+        _isLoading = false;
+        _processingStage = '';
       });
 
       // Show a success message
@@ -100,6 +121,10 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _processingStage = '';
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
@@ -108,10 +133,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           ),
         );
       }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -165,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.upload),
-                      label: Text(_isLoading ? 'Processing...' : 'Process Audio'),
+                      label: Text(_isLoading ? _processingStage : 'Process Audio'),
                     ),
                   ],
                 ),

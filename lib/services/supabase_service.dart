@@ -220,7 +220,10 @@ class SupabaseService {
     }
   }
 
-  Future<Map<String, String>> processAudioUrl(String audioUrl) async {
+  Future<Map<String, String>> processAudioUrl(
+    String audioUrl, {
+    Function(String stage)? onAiStageChange,
+  }) async {
     try {
       print('Processing audio URL: $audioUrl'); // Debug log
       
@@ -250,7 +253,10 @@ class SupabaseService {
         final transcript = responseData['transcript'] ?? 'No transcript available';
         
         // Use the already initialized Gemini service
-        final markdownNotes = await _geminiService.processTranscript(transcript);
+        final markdownNotes = await _geminiService.processTranscript(
+          transcript,
+          onStageChange: onAiStageChange,
+        );
         
         // Save the transcript and notes to Supabase
         final currentUser = client.auth.currentUser;
