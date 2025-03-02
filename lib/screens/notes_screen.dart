@@ -81,7 +81,7 @@ class NotesScreenState extends State<NotesScreen> {
       context: context,
       builder: (context) => Dialog.fullscreen(
         child: DefaultTabController(
-          length: 2,
+          length: 3,
           child: Scaffold(
             appBar: AppBar(
               title: Text(note['title'] ?? 'Note Details'),
@@ -92,6 +92,7 @@ class NotesScreenState extends State<NotesScreen> {
               bottom: const TabBar(
                 tabs: [
                   Tab(text: 'Notes'),
+                  Tab(text: 'To Do Items'),
                   Tab(text: 'Transcript'),
                 ],
               ),
@@ -107,6 +108,28 @@ class NotesScreenState extends State<NotesScreen> {
                       children: [
                         MarkdownBody(
                           data: note['notes'] ?? 'No notes available',
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet(
+                            p: Theme.of(context).textTheme.bodyMedium,
+                            h1: Theme.of(context).textTheme.headlineMedium,
+                            h2: Theme.of(context).textTheme.titleLarge,
+                            h3: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+                // Actionable Items Tab
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        MarkdownBody(
+                          data: note['actionable_items'] ?? 'No actionable items available',
                           selectable: true,
                           styleSheet: MarkdownStyleSheet(
                             p: Theme.of(context).textTheme.bodyMedium,
@@ -151,6 +174,16 @@ class NotesScreenState extends State<NotesScreen> {
                     },
                     icon: const Icon(Icons.copy),
                     label: const Text('Copy Notes'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: note['actionable_items'] ?? ''));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Actionable items copied to clipboard')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy Items'),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -291,30 +324,71 @@ class NotesScreenState extends State<NotesScreen> {
                     const SizedBox(height: 8),
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        return Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 80,
-                            maxWidth: constraints.maxWidth,
-                          ),
-                          child: ClipRect(
-                            child: OverflowBox(
-                              alignment: Alignment.topLeft,
-                              maxHeight: double.infinity,
-                              child: MarkdownBody(
-                                data: note['notes'] ?? 'No notes available',
-                                selectable: false,
-                                softLineBreak: true,
-                                styleSheet: MarkdownStyleSheet(
-                                  p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    height: 1.3,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 80,
+                                maxWidth: constraints.maxWidth,
+                              ),
+                              child: ClipRect(
+                                child: OverflowBox(
+                                  alignment: Alignment.topLeft,
+                                  maxHeight: double.infinity,
+                                  child: MarkdownBody(
+                                    data: note['notes'] ?? 'No notes available',
+                                    selectable: false,
+                                    softLineBreak: true,
+                                    styleSheet: MarkdownStyleSheet(
+                                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        height: 1.3,
+                                      ),
+                                      h1: Theme.of(context).textTheme.titleMedium,
+                                      h2: Theme.of(context).textTheme.titleSmall,
+                                      h3: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                  h1: Theme.of(context).textTheme.titleMedium,
-                                  h2: Theme.of(context).textTheme.titleSmall,
-                                  h3: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
-                          ),
+                            if (note['actionable_items'] != null && 
+                                note['actionable_items'] != 'No actionable items mentioned in this lecture.')
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Actionable Items:',
+                                    style: Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 60,
+                                      maxWidth: constraints.maxWidth,
+                                    ),
+                                    child: ClipRect(
+                                      child: OverflowBox(
+                                        alignment: Alignment.topLeft,
+                                        maxHeight: double.infinity,
+                                        child: MarkdownBody(
+                                          data: note['actionable_items'] ?? 'No actionable items available',
+                                          selectable: false,
+                                          softLineBreak: true,
+                                          styleSheet: MarkdownStyleSheet(
+                                            p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              height: 1.3,
+                                              color: Theme.of(context).colorScheme.tertiary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
                         );
                       },
                     ),

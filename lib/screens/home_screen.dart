@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Actionable Items:',
+                                  'To Do Items:',
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
                                 IconButton(
