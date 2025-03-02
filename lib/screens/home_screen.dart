@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../services/supabase_service.dart';
 import 'dart:io';
 import 'notes_screen.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(String transcript, String notes)? onNotesUpdated;
@@ -24,13 +25,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   bool _isLoading = false;
   Uint8List? _audioBytes;
   String? _audioUrl;
-  bool _isRecording = false;
-  bool _isProcessing = false;
-  String _recordingStatus = '';
-  final GlobalKey<NotesScreenState> _notesKey = GlobalKey();
 
   @override
-  bool get wantKeepAlive => true;  // This ensures the state is kept alive
+  bool get wantKeepAlive => true;
 
   Future<void> _pickAudioFile() async {
     try {
@@ -94,10 +91,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         _serverResponse = transcript;
       });
 
-      // Update notes screen with new content
-      final notesScreen = _notesKey.currentState;
-      if (notesScreen != null) {
-        notesScreen.updateNotes(transcript['transcript']!, transcript['notes']!);
+      // Update notes through callback if provided
+      if (widget.onNotesUpdated != null) {
+        widget.onNotesUpdated!(
+          transcript['transcript']!,
+          transcript['notes']!
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -116,59 +115,32 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     }
   }
 
-  void _copyToClipboard() async {
+  void _copyToClipboard(String type) async {
     if (_serverResponse != null) {
-      await Clipboard.setData(ClipboardData(text: _serverResponse!['transcript'] ?? 'No transcript available'));
+      final textToCopy = type == 'transcript' 
+          ? _serverResponse!['transcript'] 
+          : _serverResponse!['notes'];
+      await Clipboard.setData(ClipboardData(text: textToCopy ?? ''));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Text copied to clipboard'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('${type.capitalize()} copied to clipboard'),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     }
   }
 
-  Future<void> _processAudio(File audioFile) async {
-    setState(() {
-      _isProcessing = true;
-      _recordingStatus = 'Processing audio...';
-    });
-
-    try {
-      // Upload audio file
-      final audioUrl = await SupabaseService().uploadAudio(audioFile);
-      
-      // Process audio and get transcript and notes
-      final result = await SupabaseService().processAudioUrl(audioUrl);
-      
-      // Update notes through callback
-      widget.onNotesUpdated?.call(result['transcript']!, result['notes']!);
-
-      setState(() {
-        _recordingStatus = 'Processing complete!';
-      });
-    } catch (e) {
-      setState(() {
-        _recordingStatus = 'Error: ${e.toString()}';
-      });
-    } finally {
-      setState(() {
-        _isProcessing = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    super.build(context);  // Required by AutomaticKeepAliveClientMixin
-    return SingleChildScrollView(  // Make entire content scrollable
+    super.build(context);
+    return SingleChildScrollView(
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 24),  // Add some padding at top
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _pickAudioFile,
               icon: const Icon(Icons.audio_file),
@@ -201,74 +173,107 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             if (_serverResponse != null)
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Card(
-                  elevation: 0,
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Audio Transcript:',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.5,  // Limit height to 50% of screen
-                          ),
-                          child: SingleChildScrollView(  // Make response text scrollable
-                            child: SelectableText(  // Make text selectable
-                              _serverResponse!['transcript'] ?? 'No transcript available',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                child: Column(
+                  children: [
+                    // Transcript Card
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextButton.icon(
-                              onPressed: _copyToClipboard,
-                              icon: const Icon(Icons.copy),
-                              label: const Text('Copy'),
+                            Text(
+                              'Audio Transcript:',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                              ),
+                              child: SingleChildScrollView(
+                                child: SelectableText(
+                                  _serverResponse!['transcript'] ?? 'No transcript available',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _copyToClipboard('transcript'),
+                                  icon: const Icon(Icons.copy),
+                                  label: const Text('Copy'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    // Processed Notes Card
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Lecture Notes:',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                              ),
+                              child: SingleChildScrollView(
+                                child: MarkdownBody(
+                                  data: _serverResponse!['notes'] ?? 'No notes available',
+                                  selectable: true,
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: Theme.of(context).textTheme.bodyMedium,
+                                    h1: Theme.of(context).textTheme.headlineMedium,
+                                    h2: Theme.of(context).textTheme.titleLarge,
+                                    h3: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _copyToClipboard('notes'),
+                                  icon: const Icon(Icons.copy),
+                                  label: const Text('Copy'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            const SizedBox(height: 24),  // Add some padding at bottom
-            if (_isProcessing)
-              const CircularProgressIndicator()
-            else
-              IconButton(
-                icon: Icon(
-                  _isRecording ? Icons.stop_circle : Icons.mic,
-                  size: 64,
-                  color: _isRecording
-                      ? Colors.red
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                onPressed: _isProcessing ? null : _toggleRecording,
-              ),
-            const SizedBox(height: 16),
-            Text(
-              _recordingStatus,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
           ],
         ),
       ),
     );
   }
+}
 
-  void _toggleRecording() {
-    // Implement recording logic here
-    // When recording is complete, call _processAudio(audioFile)
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 } 

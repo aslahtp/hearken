@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'gemini_service.dart';
+import '../services/gemini_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -149,11 +149,14 @@ class SupabaseService {
         final responseData = jsonDecode(response.body);
         final transcript = responseData['transcript'] ?? 'No transcript available';
         
-        // For now, return the transcript as both transcript and notes
-        // until Gemini service is properly integrated
+        // Process transcript with Gemini
+        final gemini = GeminiService();
+        gemini.initialize(); // Initialize the Gemini service
+        final markdownNotes = await gemini.processTranscript(transcript);
+        
         return {
           'transcript': transcript,
-          'notes': transcript,
+          'notes': markdownNotes,
         };
       } else if (response.statusCode == 404) {
         throw Exception('Processing endpoint not available. Please check if the Flask server is running and ngrok is configured correctly.');
