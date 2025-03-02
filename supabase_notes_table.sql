@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS public.notes (
   notes TEXT NOT NULL,
   audio_url TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  actionable_items TEXT
 );
 
 -- Create RLS policies for the notes table

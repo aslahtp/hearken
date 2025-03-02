@@ -253,25 +253,32 @@ class SupabaseService {
         final transcript = responseData['transcript'] ?? 'No transcript available';
         
         // Use the already initialized Gemini service
-        final markdownNotes = await _geminiService.processTranscript(
+        final aiResponse = await _geminiService.processTranscript(
           transcript,
           onStageChange: onAiStageChange,
         );
+
+        // Split the response into notes and actionable items
+        final parts = aiResponse.split('# ACTIONABLE_ITEMS');
+        final notes = parts[0].replaceFirst('# LECTURE_NOTES', '').trim();
+        final actionableItems = parts.length > 1 ? parts[1].trim() : 'No actionable items mentioned in this lecture.';
         
-        // Save the transcript and notes to Supabase
+        // Save to database
         final currentUser = client.auth.currentUser;
         if (currentUser != null) {
           await saveNoteToDatabase(
             title: 'Note ${DateTime.now().toString().substring(0, 16)}',
             transcript: transcript,
-            notes: markdownNotes,
+            notes: notes,
+            actionableItems: actionableItems,
             audioUrl: audioUrl,
           );
         }
         
         return {
           'transcript': transcript,
-          'notes': markdownNotes,
+          'notes': notes,
+          'actionableItems': actionableItems,
         };
       } else if (response.statusCode == 404) {
         throw Exception('Processing endpoint not available. Please check if the Flask server is running and ngrok is configured correctly.');
@@ -289,6 +296,7 @@ class SupabaseService {
     required String title,
     required String transcript,
     required String notes,
+    required String actionableItems,
     required String audioUrl,
   }) async {
     try {
@@ -302,6 +310,7 @@ class SupabaseService {
         'title': title,
         'transcript': transcript,
         'notes': notes,
+        'actionable_items': actionableItems,
         'audio_url': audioUrl,
         'created_at': DateTime.now().toIso8601String(),
       });

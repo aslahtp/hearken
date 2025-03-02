@@ -138,9 +138,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
 
   void _copyToClipboard(String type) async {
     if (_serverResponse != null) {
-      final textToCopy = type == 'transcript' 
-          ? _serverResponse!['transcript'] 
-          : _serverResponse!['notes'];
+      final textToCopy = switch (type) {
+        'transcript' => _serverResponse!['transcript'],
+        'notes' => _serverResponse!['notes'],
+        'actionableItems' => _serverResponse!['actionableItems'],
+        _ => null,
+      };
       await Clipboard.setData(ClipboardData(text: textToCopy ?? ''));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -358,6 +361,98 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                               children: [
                                 TextButton.icon(
                                   onPressed: () => _copyToClipboard('notes'),
+                                  icon: const Icon(Icons.copy),
+                                  label: const Text('Copy'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Actionable Items Card
+                    Card(
+                      elevation: 0,
+                      color: Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.5),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Actionable Items:',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.fullscreen),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog.fullscreen(
+                                        child: Scaffold(
+                                          appBar: AppBar(
+                                            title: const Text('Actionable Items'),
+                                            leading: IconButton(
+                                              icon: const Icon(Icons.close),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                            ),
+                                          ),
+                                          body: SafeArea(
+                                            child: SingleChildScrollView(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  MarkdownBody(
+                                                    data: _serverResponse!['actionableItems'] ?? 'No actionable items available',
+                                                    selectable: true,
+                                                    styleSheet: MarkdownStyleSheet(
+                                                      p: Theme.of(context).textTheme.bodyMedium,
+                                                      h1: Theme.of(context).textTheme.headlineMedium,
+                                                      h2: Theme.of(context).textTheme.titleLarge,
+                                                      h3: Theme.of(context).textTheme.titleMedium,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 32),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                              ),
+                              child: SingleChildScrollView(
+                                child: MarkdownBody(
+                                  data: _serverResponse!['actionableItems'] ?? 'No actionable items available',
+                                  selectable: true,
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: Theme.of(context).textTheme.bodyMedium,
+                                    h1: Theme.of(context).textTheme.headlineMedium,
+                                    h2: Theme.of(context).textTheme.titleLarge,
+                                    h3: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _copyToClipboard('actionableItems'),
                                   icon: const Icon(Icons.copy),
                                   label: const Text('Copy'),
                                 ),
