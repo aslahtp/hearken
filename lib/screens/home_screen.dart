@@ -11,9 +11,7 @@ import 'notes_screen.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Function(String transcript, String notes)? onNotesUpdated;
-  
-  const HomeScreen({this.onNotesUpdated, super.key});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -98,14 +96,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             content: Text('Audio processed successfully and saved to your notes'),
             backgroundColor: Colors.green,
           ),
-        );
-      }
-
-      // Update notes through callback if provided
-      if (widget.onNotesUpdated != null) {
-        widget.onNotesUpdated!(
-          transcript['transcript']!,
-          transcript['notes']!
         );
       }
     } catch (e) {

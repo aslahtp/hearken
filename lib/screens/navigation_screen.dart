@@ -14,18 +14,6 @@ class NavigationScreen extends StatefulWidget {
 
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
-  final _notesScreen = GlobalKey<NotesScreenState>();
-
-  void _updateNotes(String transcript, String notes) {
-    final notesState = _notesScreen.currentState;
-    if (notesState != null) {
-      notesState.updateNotes(transcript, notes);
-      // Switch to notes tab
-      setState(() {
-        _selectedIndex = 1;
-      });
-    }
-  }
 
   void _signOut() async {
     try {
@@ -63,8 +51,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          HomeScreen(onNotesUpdated: _updateNotes),
-          NotesScreen(key: _notesScreen),
+          const HomeScreen(),
+          const NotesScreen(),
           const ProfileScreen(),
         ],
       ),

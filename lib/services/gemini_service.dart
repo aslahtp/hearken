@@ -29,8 +29,8 @@ class GeminiService {
       final prompt = '''
         The input is a transcribe of a lecture audio.
         Convert it into a lecture note with markdown format supporting in obsidian.
-        Also list if any actionable items such as homework, assignments or tests are mentioned.
-        Enclose math notation inside \$\$ and code inside backticks.
+        Also list if any actionable items such as homework, assignments,refer topics or text before next lecture, or tests are mentioned.
+        Enclose math notation inside \$\$ and code inside backticks.list actionable items only when needed.
 
         Transcript:
         $transcript
