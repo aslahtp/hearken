@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'screens/navigation_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'package:dynamic_color/dynamic_color.dart';
+import 'services/supabase_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/profile_screen.dart';
-import 'package:dynamic_color/dynamic_color.dart';
-import 'services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,7 +80,15 @@ class MyApp extends StatelessWidget {
             ),
           ),
           themeMode: ThemeMode.system,
-          home: const NavigationScreen(),
+          home: StreamBuilder(
+            stream: SupabaseService().authStateChanges,
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data?.session != null) {
+                return const NavigationScreen();
+              }
+              return const LoginScreen();
+            },
+          ),
         );
       },
     );
@@ -95,10 +105,10 @@ class NavigationScreen extends StatefulWidget {
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    NotesScreen(),
-    ProfileScreen(),
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const NotesScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

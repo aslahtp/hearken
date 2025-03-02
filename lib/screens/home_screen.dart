@@ -7,9 +7,12 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../services/supabase_service.dart';
 import 'dart:io';
+import 'notes_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(String transcript, String notes)? onNotesUpdated;
+  
+  const HomeScreen({this.onNotesUpdated, super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -17,10 +20,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   String? _selectedAudioName;
-  String? _serverResponse;
+  Map<String, String>? _serverResponse;
   bool _isLoading = false;
   Uint8List? _audioBytes;
   String? _audioUrl;
+  bool _isRecording = false;
+  bool _isProcessing = false;
+  String _recordingStatus = '';
+  final GlobalKey<NotesScreenState> _notesKey = GlobalKey();
 
   @override
   bool get wantKeepAlive => true;  // This ensures the state is kept alive
@@ -86,6 +93,12 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         _audioUrl = publicUrl;
         _serverResponse = transcript;
       });
+
+      // Update notes screen with new content
+      final notesScreen = _notesKey.currentState;
+      if (notesScreen != null) {
+        notesScreen.updateNotes(transcript['transcript']!, transcript['notes']!);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
 
   void _copyToClipboard() async {
     if (_serverResponse != null) {
-      await Clipboard.setData(ClipboardData(text: _serverResponse!));
+      await Clipboard.setData(ClipboardData(text: _serverResponse!['transcript'] ?? 'No transcript available'));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -114,6 +127,36 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           ),
         );
       }
+    }
+  }
+
+  Future<void> _processAudio(File audioFile) async {
+    setState(() {
+      _isProcessing = true;
+      _recordingStatus = 'Processing audio...';
+    });
+
+    try {
+      // Upload audio file
+      final audioUrl = await SupabaseService().uploadAudio(audioFile);
+      
+      // Process audio and get transcript and notes
+      final result = await SupabaseService().processAudioUrl(audioUrl);
+      
+      // Update notes through callback
+      widget.onNotesUpdated?.call(result['transcript']!, result['notes']!);
+
+      setState(() {
+        _recordingStatus = 'Processing complete!';
+      });
+    } catch (e) {
+      setState(() {
+        _recordingStatus = 'Error: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
@@ -177,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                           ),
                           child: SingleChildScrollView(  // Make response text scrollable
                             child: SelectableText(  // Make text selectable
-                              _serverResponse!,
+                              _serverResponse!['transcript'] ?? 'No transcript available',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
@@ -199,9 +242,33 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                 ),
               ),
             const SizedBox(height: 24),  // Add some padding at bottom
+            if (_isProcessing)
+              const CircularProgressIndicator()
+            else
+              IconButton(
+                icon: Icon(
+                  _isRecording ? Icons.stop_circle : Icons.mic,
+                  size: 64,
+                  color: _isRecording
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.primary,
+                ),
+                onPressed: _isProcessing ? null : _toggleRecording,
+              ),
+            const SizedBox(height: 16),
+            Text(
+              _recordingStatus,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _toggleRecording() {
+    // Implement recording logic here
+    // When recording is complete, call _processAudio(audioFile)
   }
 } 
