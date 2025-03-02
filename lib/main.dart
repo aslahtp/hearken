@@ -6,10 +6,20 @@ import 'services/supabase_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/profile_screen.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SupabaseService().initialize();
+  
+  // Add error handling for Supabase initialization
+  try {
+    await SupabaseService().initialize();
+  } catch (e) {
+    // Log the error but continue with the app
+    print('Error initializing Supabase: $e');
+    // We'll handle the connection state in the app
+  }
+  
   runApp(const MyApp());
 }
 

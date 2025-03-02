@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
@@ -8,17 +9,51 @@ import '../services/gemini_service.dart';
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
-  SupabaseService._internal();
+  
+  final GeminiService _geminiService = GeminiService();
+  
+  SupabaseService._internal() {
+    // Initialize Gemini service when SupabaseService is created
+    _geminiService.initialize();
+  }
 
   static const String supabaseUrl = 'https://cvlqvckhpevzzynfxvka.supabase.co';
   static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2bHF2Y2tocGV2enp5bmZ4dmthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA3NjczNDUsImV4cCI6MjA1NjM0MzM0NX0.ozptCqMkD-MutucMfTqV2ps-aWHkEEtyxBCc2WLwpes';
   //static const String backendUrl = 'http://176.20.0.92:5000';
 
+  // Add a retry mechanism for initialization
   Future<void> initialize() async {
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
+    int retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 2);
+
+    while (retryCount < maxRetries) {
+      try {
+        await Supabase.initialize(
+          url: supabaseUrl,
+          anonKey: supabaseAnonKey,
+          headers: {
+            'X-Client-Info': 'hearken-db',
+          },
+          storageOptions: const StorageClientOptions(
+            retryAttempts: 3,
+          ),
+        );
+        return; // Success, exit the retry loop
+      } catch (e) {
+        retryCount++;
+        if (retryCount == maxRetries) {
+          if (e.toString().contains('Failed host lookup')) {
+            throw Exception(
+              'Unable to connect to Supabase. Please check your internet connection and try again.\n'
+              'If the problem persists, please ensure you have a stable internet connection.'
+            );
+          }
+          throw Exception('Failed to initialize Supabase: $e');
+        }
+        await Future.delayed(retryDelay);
+      }
+    }
   }
 
   SupabaseClient get client => Supabase.instance.client;
@@ -52,17 +87,82 @@ class SupabaseService {
     }
   }
 
+  // Improved connectivity check with timeout and multiple attempts
+  Future<bool> checkConnectivity() async {
+    int attempts = 0;
+    const maxAttempts = 3; // Increased from 2 to 3 attempts
+    
+    while (attempts < maxAttempts) {
+      try {
+        // Try to connect to Supabase
+        final response = await http.get(
+          Uri.parse('$supabaseUrl/rest/v1/?apikey=$supabaseAnonKey'),
+          headers: {
+            'X-Client-Info': 'hearken-db',
+            'Content-Type': 'application/json',
+          },
+        ).timeout(
+          const Duration(seconds: 8), // Increased timeout from 5 to 8 seconds
+          onTimeout: () => throw TimeoutException('Connection timed out'),
+        );
+        
+        // If we get a successful response, return true
+        return response.statusCode >= 200 && response.statusCode < 300;
+      } catch (e) {
+        print('Connectivity check attempt ${attempts + 1} failed: $e');
+        attempts++;
+        if (attempts == maxAttempts) {
+          return false;
+        }
+        // Increase delay between attempts
+        await Future.delayed(Duration(seconds: attempts));
+      }
+    }
+    return false;
+  }
+
   Future<AuthResponse> signIn({
     required String email,
     required String password,
   }) async {
     try {
+      // Check connectivity with a more informative error
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        throw Exception(
+          'Exception: Failed to sign in: Exception: Unable to connect to the server. Please:\n'
+          '1. Check if you have an active internet connection\n'
+          '2. Try switching between WiFi and mobile data\n'
+          '3. Wait a few moments and try again'
+        );
+      }
+
+      // Try to sign in with a longer timeout
       final response = await client.auth.signInWithPassword(
         email: email,
         password: password,
+      ).timeout(
+        const Duration(seconds: 15), // Increased from 10 to 15 seconds
+        onTimeout: () => throw TimeoutException('Sign in request timed out'),
       );
       return response;
     } catch (e) {
+      if (e is TimeoutException) {
+        throw Exception(
+          'The connection timed out. Please check your internet connection and try again.'
+        );
+      }
+      if (e.toString().contains('Failed host lookup') || 
+          e.toString().contains('SocketException') ||
+          e.toString().contains('Connection refused')) {
+        throw Exception(
+          'Unable to connect to the server. Please:\n'
+          '1. Check if you have an active internet connection\n'
+          '2. Try switching between WiFi and mobile data\n'
+          '3. Wait a few moments and try again'
+        );
+      }
+      // Pass through the original error message
       throw Exception('Failed to sign in: $e');
     }
   }
@@ -149,10 +249,8 @@ class SupabaseService {
         final responseData = jsonDecode(response.body);
         final transcript = responseData['transcript'] ?? 'No transcript available';
         
-        // Process transcript with Gemini
-        final gemini = GeminiService();
-        gemini.initialize(); // Initialize the Gemini service
-        final markdownNotes = await gemini.processTranscript(transcript);
+        // Use the already initialized Gemini service
+        final markdownNotes = await _geminiService.processTranscript(transcript);
         
         return {
           'transcript': transcript,

@@ -184,9 +184,48 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Audio Transcript:',
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Audio Transcript:',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.fullscreen),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog.fullscreen(
+                                        child: Scaffold(
+                                          appBar: AppBar(
+                                            title: const Text('Audio Transcript'),
+                                            leading: IconButton(
+                                              icon: const Icon(Icons.close),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                            ),
+                                          ),
+                                          body: SafeArea(
+                                            child: SingleChildScrollView(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  SelectableText(
+                                                    _serverResponse!['transcript'] ?? 'No transcript available',
+                                                    style: Theme.of(context).textTheme.bodyMedium,
+                                                  ),
+                                                  const SizedBox(height: 32),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Container(
@@ -225,14 +264,59 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Lecture Notes:',
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Lecture Notes:',
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.fullscreen),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => Dialog.fullscreen(
+                                        child: Scaffold(
+                                          appBar: AppBar(
+                                            title: const Text('Lecture Notes'),
+                                            leading: IconButton(
+                                              icon: const Icon(Icons.close),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                            ),
+                                          ),
+                                          body: SafeArea(
+                                            child: SingleChildScrollView(
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  MarkdownBody(
+                                                    data: _serverResponse!['notes'] ?? 'No notes available',
+                                                    selectable: true,
+                                                    styleSheet: MarkdownStyleSheet(
+                                                      p: Theme.of(context).textTheme.bodyMedium,
+                                                      h1: Theme.of(context).textTheme.headlineMedium,
+                                                      h2: Theme.of(context).textTheme.titleLarge,
+                                                      h3: Theme.of(context).textTheme.titleMedium,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 32), // Add bottom padding
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Container(
                               constraints: BoxConstraints(
-                                maxHeight: MediaQuery.of(context).size.height * 0.3,
+                                maxHeight: MediaQuery.of(context).size.height * 0.5,
                               ),
                               child: SingleChildScrollView(
                                 child: MarkdownBody(

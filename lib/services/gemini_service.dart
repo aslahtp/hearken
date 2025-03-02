@@ -9,8 +9,11 @@ class GeminiService {
   // Get your API key from: https://makersuite.google.com/app/apikey
   static const String apiKey = 'AIzaSyB_SZOdptCdmM3KMPS2X2mA772DHGOMgOk';
   late final GenerativeModel _model;
+  bool _isInitialized = false;
 
   void initialize() {
+    if (_isInitialized) return; // Prevent re-initialization
+    
     if (apiKey == 'YOUR_GEMINI_API_KEY') {
       throw Exception('Please replace the Gemini API key in lib/services/gemini_service.dart');
     }
@@ -18,6 +21,7 @@ class GeminiService {
       model: 'gemini-2.0-flash',
       apiKey: apiKey,
     );
+    _isInitialized = true;
   }
 
   Future<String> processTranscript(String transcript) async {

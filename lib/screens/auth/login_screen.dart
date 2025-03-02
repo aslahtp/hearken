@@ -30,6 +30,25 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Check for internet connectivity first
+      final isConnected = await SupabaseService().checkConnectivity();
+      if (!isConnected && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to connect to the server. Please:\n'
+              '1. Check if you have an active internet connection\n'
+              '2. Try switching between WiFi and mobile data\n'
+              '3. Wait a few moments and try again'
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
       await SupabaseService().signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -42,10 +61,28 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Extract the most relevant part of the error message
+        String errorMessage = e.toString();
+        
+        // Clean up the error message for better user experience
+        if (errorMessage.contains('Exception: Failed to sign in: Exception:')) {
+          errorMessage = errorMessage.replaceAll('Exception: Failed to sign in: Exception:', '');
+        } else if (errorMessage.contains('Exception: Failed to sign in:')) {
+          errorMessage = errorMessage.replaceAll('Exception: Failed to sign in:', '');
+        }
+        
+        // Handle specific error cases
+        if (errorMessage.contains('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (errorMessage.contains('Unable to connect to the server')) {
+          errorMessage = 'Connection error. Please check your internet and try again.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
