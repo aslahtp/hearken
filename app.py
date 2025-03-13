@@ -1,11 +1,24 @@
+import os
+# Set environment variables BEFORE importing any CUDA-related libraries.
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# Replace "0" with the index (or comma-separated list) corresponding to your RTX GPU.
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
-import whisper
 import logging
 import requests
 from werkzeug.utils import secure_filename
 import tempfile
+import whisper
+import torch
+
+# Optionally log which GPU is being used
+if torch.cuda.is_available():
+    logging.basicConfig(level=logging.DEBUG)
+    logging.info(f"Using GPU: {torch.cuda.get_device_name(0)}")
+else:
+    logging.info("CUDA not available, using CPU")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -32,10 +45,11 @@ ALLOWED_EXTENSIONS = {'mp3', 'wav', 'm4a', 'aac', 'wma'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Load Whisper model
+# Load Whisper model on the selected device (GPU if available)
 try:
-    model = whisper.load_model("tiny")
-    logging.info("Whisper model loaded successfully")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = whisper.load_model("tiny").to(device)
+    logging.info(f"Whisper model loaded successfully on {device}")
 except Exception as e:
     logging.error(f"Failed to load Whisper model: {e}")
     model = None
@@ -142,4 +156,4 @@ if __name__ == '__main__':
         port=5000,
         debug=True,
         threaded=True
-    ) 
+    )
