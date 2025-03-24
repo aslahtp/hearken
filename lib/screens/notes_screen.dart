@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../services/supabase_service.dart';
 import 'dart:async';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
+import 'dart:io';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -201,6 +206,12 @@ class NotesScreenState extends State<NotesScreen> {
                         icon: const Icon(Icons.copy),
                         label: const Text('Copy Transcript'),
                       ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () => _exportToPdf(note),
+                        icon: const Icon(Icons.picture_as_pdf),
+                        label: const Text('Export PDF'),
+                      ),
                     ],
                   ),
                 ),
@@ -210,6 +221,169 @@ class NotesScreenState extends State<NotesScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _exportToPdf(Map<String, dynamic> note) async {
+    try {
+      // Create PDF document with barebones text-only approach
+      final pdf = pw.Document();
+      
+      // Get the title and date
+      final title = note['title'] ?? 'Untitled Note';
+      final createdAt = DateTime.parse(note['created_at'] ?? DateTime.now().toIso8601String());
+      final formattedDate = '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
+      
+      // Get note content
+      final noteText = note['notes'] ?? 'No notes available';
+
+      // Create a text-only PDF with automatic page breaks
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(30),
+          build: (context) {
+            // Simple list of widgets for content
+            final List<pw.Widget> widgets = [];
+            
+            // Title
+            widgets.add(pw.Text(
+              title,
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ));
+            
+            // Date
+            widgets.add(pw.SizedBox(height: 4));
+            widgets.add(pw.Text('Created: $formattedDate',
+              style: const pw.TextStyle(fontSize: 10),
+            ));
+            
+            // Divider
+            widgets.add(pw.Divider());
+            widgets.add(pw.SizedBox(height: 8));
+            
+            // Notes header
+            widgets.add(pw.Text(
+              'Notes',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ));
+            widgets.add(pw.SizedBox(height: 8));
+            
+            // Break notes into paragraphs for better handling
+            final paragraphs = noteText.split('\n\n');
+            for (var paragraph in paragraphs) {
+              widgets.add(pw.Text(
+                paragraph.trim(),
+                style: const pw.TextStyle(fontSize: 10),
+              ));
+              widgets.add(pw.SizedBox(height: 4));
+            }
+            
+            return widgets;
+          },
+        ),
+      );
+      
+      // Generate PDF bytes
+      final bytes = await pdf.save();
+      final sanitizedTitle = title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+      final fileName = '$sanitizedTitle.pdf';
+      
+      // For Windows/macOS/Linux
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        final downloadsPath = '${Platform.environment['HOME']}/Downloads';
+        final file = File('$downloadsPath/$fileName');
+        await file.writeAsBytes(bytes);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('PDF saved to: ${file.path}'),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+      
+      // For mobile platforms, first save to a temporary file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$fileName');
+      await tempFile.writeAsBytes(bytes);
+      
+      if (Platform.isAndroid) {
+        try {
+          // Try to get Downloads folder on Android
+          Directory? downloadsDir;
+          final externalDir = await getExternalStorageDirectory();
+          if (externalDir != null) {
+            // Navigate up to find the Download directory
+            final parentDir = externalDir.path.split('/Android')[0];
+            downloadsDir = Directory('$parentDir/Download');
+            if (await downloadsDir.exists()) {
+              final file = File('${downloadsDir.path}/$fileName');
+              await file.writeAsBytes(bytes);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('PDF saved to: ${file.path}'),
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+              return;
+            }
+          }
+          
+          // If we couldn't save to Downloads, inform the user of the temp location
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('PDF saved to temporary location: ${tempFile.path}\nCopy it to your preferred location.'),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        } catch (e) {
+          // If there's an error saving to Downloads, use the temp file
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not save to Downloads folder. PDF saved to: ${tempFile.path}'),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } else if (Platform.isIOS) {
+        // On iOS, save to Documents directory
+        final docsDir = await getApplicationDocumentsDirectory();
+        final file = File('${docsDir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('PDF saved to: ${file.path}'),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Show an error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate PDF: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -403,9 +577,22 @@ class NotesScreenState extends State<NotesScreen> {
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => _viewNoteDetails(note),
-                        child: const Text('View Details'),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _exportToPdf(note),
+                            icon: const Icon(Icons.picture_as_pdf, size: 18),
+                            label: const Text('Export PDF'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _viewNoteDetails(note),
+                            child: const Text('View Details'),
+                          ),
+                        ],
                       ),
                     ),
                   ],
