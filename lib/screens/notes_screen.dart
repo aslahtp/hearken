@@ -236,7 +236,6 @@ class NotesScreenState extends State<NotesScreen> {
       // Get content from all tabs
       final noteText = note['notes'] ?? 'No notes available';
       final actionableText = note['actionable_items'] ?? 'No actionable items available';
-      final transcriptText = note['transcript'] ?? 'No transcript available';
 
       // Create a PDF with proper markdown rendering and automatic page breaks
       pdf.addPage(
@@ -304,26 +303,6 @@ class NotesScreenState extends State<NotesScreen> {
               
               // Process markdown-like content for actionable items
               _processMarkdownContent(widgets, actionableText);
-            }
-            
-            // Transcript section
-            widgets.add(pw.SizedBox(height: 16));
-            widgets.add(pw.Header(
-              level: 1,
-              text: 'Transcript',
-              textStyle: pw.TextStyle(
-                fontSize: 16,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ));
-            
-            // Add transcript text (split into manageable paragraphs to avoid overflow)
-            final transcriptParagraphs = transcriptText.split('\n\n');
-            for (var paragraph in transcriptParagraphs) {
-              widgets.add(pw.Paragraph(
-                text: paragraph.trim(),
-                style: const pw.TextStyle(fontSize: 10),
-              ));
             }
             
             return widgets;
@@ -469,20 +448,56 @@ class NotesScreenState extends State<NotesScreen> {
       } else if (line.startsWith('- ') || line.startsWith('* ')) {
         // Bullet point
         widgets.add(pw.Bullet(
-          text: line.substring(2),
-          style: const pw.TextStyle(fontSize: 10),
+          text: _processBoldText(line.substring(2)),
+          style: pw.TextStyle(fontSize: 10),
         ));
       } else if (line != '') {
         // Regular paragraph
         widgets.add(pw.Paragraph(
-          text: line,
-          style: const pw.TextStyle(fontSize: 10),
+          text: _processBoldText(line),
+          style: pw.TextStyle(fontSize: 10),
         ));
       } else if (i > 0 && lines[i-1] != '') {
         // Empty line after content - add spacing
         widgets.add(pw.SizedBox(height: 4));
       }
     }
+  }
+  
+  // Helper to process bold markdown text
+  String _processBoldText(String text) {
+    // Process bold markdown (** and __) by removing the markers
+    String result = text;
+    
+    // First handle ** bold markers
+    while (result.contains('**')) {
+      final startIndex = result.indexOf('**');
+      if (startIndex >= 0) {
+        final endIndex = result.indexOf('**', startIndex + 2);
+        if (endIndex > startIndex) {
+          final boldText = result.substring(startIndex + 2, endIndex);
+          result = result.replaceRange(startIndex, endIndex + 2, boldText);
+        } else {
+          break; // No matching closing **
+        }
+      }
+    }
+    
+    // Then handle __ bold markers
+    while (result.contains('__')) {
+      final startIndex = result.indexOf('__');
+      if (startIndex >= 0) {
+        final endIndex = result.indexOf('__', startIndex + 2);
+        if (endIndex > startIndex) {
+          final boldText = result.substring(startIndex + 2, endIndex);
+          result = result.replaceRange(startIndex, endIndex + 2, boldText);
+        } else {
+          break; // No matching closing __
+        }
+      }
+    }
+    
+    return result;
   }
 
   @override
