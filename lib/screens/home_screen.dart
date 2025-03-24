@@ -182,45 +182,57 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     ),
                     const SizedBox(height: 16),
                     // Add summary level selector
-                    Column(
-                      children: [
-                        const Text('Summary Level'),
-                        const SizedBox(height: 8),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: SegmentedButton<String>(
-                              segments: const [
-                                ButtonSegment(
-                                  value: 'short',
-                                  label: Text('Short'),
-                                  icon: Icon(Icons.short_text),
-                                  tooltip: 'Concise summary with key points only',
-                                ),
-                                ButtonSegment(
-                                  value: 'medium',
-                                  label: Text('Medium'),
-                                  icon: Icon(Icons.subject),
-                                  tooltip: 'Balanced summary with main points and important details',
-                                ),
-                                ButtonSegment(
-                                  value: 'detailed',
-                                  label: Text('Detailed'),
-                                  icon: Icon(Icons.description),
-                                  tooltip: 'Comprehensive summary with detailed information',
-                                ),
-                              ],
-                              selected: {_summaryLevel},
-                              onSelectionChanged: (Set<String> selection) {
-                                setState(() {
-                                  _summaryLevel = selection.first;
-                                });
-                              },
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Summary Level:',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: SegmentedButton<String>(
+                                segments: const [
+                                  ButtonSegment(
+                                    value: 'short',
+                                    label: Text('Short'),
+                                    icon: Icon(Icons.short_text),
+                                    tooltip: 'Concise summary with key points only',
+                                  ),
+                                  ButtonSegment(
+                                    value: 'medium',
+                                    label: Text('Medium'),
+                                    icon: Icon(Icons.subject),
+                                    tooltip: 'Balanced summary with main points and important details',
+                                  ),
+                                  ButtonSegment(
+                                    value: 'detailed',
+                                    label: Text('Detailed'),
+                                    icon: Icon(Icons.description),
+                                    tooltip: 'Comprehensive summary with detailed information',
+                                  ),
+                                ],
+                                selected: {_summaryLevel},
+                                onSelectionChanged: (Set<String> selection) {
+                                  setState(() {
+                                    _summaryLevel = selection.first;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
@@ -361,43 +373,28 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                                   MarkdownBody(
                                                     data: _serverResponse!['notes'] ?? 'No notes available',
                                                     selectable: true,
-                                                    softLineBreak: true,
                                                     styleSheet: MarkdownStyleSheet(
-                                                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                        height: 1.5,
-                                                        fontSize: 16,
-                                                      ),
                                                       h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                                         fontWeight: FontWeight.bold,
-                                                        fontSize: 24,
-                                                        height: 2.0,
                                                         color: Theme.of(context).colorScheme.primary,
                                                       ),
                                                       h2: Theme.of(context).textTheme.titleLarge?.copyWith(
                                                         fontWeight: FontWeight.bold,
-                                                        fontSize: 20,
-                                                        height: 1.8,
                                                         color: Theme.of(context).colorScheme.secondary,
                                                       ),
                                                       h3: Theme.of(context).textTheme.titleMedium?.copyWith(
                                                         fontWeight: FontWeight.bold,
-                                                        fontSize: 18,
-                                                        height: 1.6,
                                                         color: Theme.of(context).colorScheme.tertiary,
                                                       ),
-                                                      listBullet: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                                         height: 1.5,
-                                                        fontSize: 16,
                                                       ),
+                                                      listBullet: Theme.of(context).textTheme.bodyMedium,
                                                       blockquote: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                                         color: Theme.of(context).colorScheme.secondary,
-                                                        fontSize: 16,
-                                                        height: 1.5,
                                                       ),
                                                       code: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                                         fontFamily: 'monospace',
-                                                        fontSize: 14,
-                                                        height: 1.5,
                                                         backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                                                       ),
                                                       codeblockPadding: const EdgeInsets.all(8),
@@ -435,43 +432,28 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                 child: MarkdownBody(
                                   data: _serverResponse!['notes'] ?? 'No notes available',
                                   selectable: true,
-                                  softLineBreak: true,
                                   styleSheet: MarkdownStyleSheet(
-                                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      height: 1.5,
-                                      fontSize: 16,
-                                    ),
                                     h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 24,
-                                      height: 2.0,
                                       color: Theme.of(context).colorScheme.primary,
                                     ),
                                     h2: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 20,
-                                      height: 1.8,
                                       color: Theme.of(context).colorScheme.secondary,
                                     ),
                                     h3: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      height: 1.6,
                                       color: Theme.of(context).colorScheme.tertiary,
                                     ),
-                                    listBullet: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       height: 1.5,
-                                      fontSize: 16,
                                     ),
+                                    listBullet: Theme.of(context).textTheme.bodyMedium,
                                     blockquote: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: Theme.of(context).colorScheme.secondary,
-                                      fontSize: 16,
-                                      height: 1.5,
                                     ),
                                     code: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       fontFamily: 'monospace',
-                                      fontSize: 14,
-                                      height: 1.5,
                                       backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                                     ),
                                     codeblockPadding: const EdgeInsets.all(8),
@@ -546,10 +528,13 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                                     data: _serverResponse!['actionableItems'] ?? 'No actionable items available',
                                                     selectable: true,
                                                     styleSheet: MarkdownStyleSheet(
-                                                      p: Theme.of(context).textTheme.bodyMedium,
                                                       h1: Theme.of(context).textTheme.headlineMedium,
                                                       h2: Theme.of(context).textTheme.titleLarge,
                                                       h3: Theme.of(context).textTheme.titleMedium,
+                                                      p: Theme.of(context).textTheme.bodyMedium,
+                                                      listBullet: Theme.of(context).textTheme.bodyMedium,
+                                                      blockquote: Theme.of(context).textTheme.bodyMedium,
+                                                      code: Theme.of(context).textTheme.bodyMedium,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 32),
@@ -574,10 +559,13 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                   data: _serverResponse!['actionableItems'] ?? 'No actionable items available',
                                   selectable: true,
                                   styleSheet: MarkdownStyleSheet(
-                                    p: Theme.of(context).textTheme.bodyMedium,
                                     h1: Theme.of(context).textTheme.headlineMedium,
                                     h2: Theme.of(context).textTheme.titleLarge,
                                     h3: Theme.of(context).textTheme.titleMedium,
+                                    p: Theme.of(context).textTheme.bodyMedium,
+                                    listBullet: Theme.of(context).textTheme.bodyMedium,
+                                    blockquote: Theme.of(context).textTheme.bodyMedium,
+                                    code: Theme.of(context).textTheme.bodyMedium,
                                   ),
                                 ),
                               ),
