@@ -162,40 +162,48 @@ class NotesScreenState extends State<NotesScreen> {
               ],
             ),
             bottomNavigationBar: BottomAppBar(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: note['notes'] ?? ''));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Notes copied to clipboard')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy Notes'),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: note['notes'] ?? ''));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Notes copied to clipboard')),
+                          );
+                        },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('Copy Notes'),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: note['actionable_items'] ?? ''));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Actionable items copied to clipboard')),
+                          );
+                        },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('Copy Items'),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: note['transcript'] ?? ''));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Transcript copied to clipboard')),
+                          );
+                        },
+                        icon: const Icon(Icons.copy),
+                        label: const Text('Copy Transcript'),
+                      ),
+                    ],
                   ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: note['actionable_items'] ?? ''));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Actionable items copied to clipboard')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy Items'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: note['transcript'] ?? ''));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Transcript copied to clipboard')),
-                      );
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy Transcript'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
