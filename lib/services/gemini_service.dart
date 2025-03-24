@@ -26,20 +26,43 @@ class GeminiService {
 
   Future<String> processTranscript(
     String transcript, {
+    String summaryLevel = 'medium',
     Function(String stage)? onStageChange,
   }) async {
     try {
       onStageChange?.call('Initializing AI model');
       
+      // Adjust instructions based on summary level
+      String levelInstructions = '';
+      switch (summaryLevel) {
+        case 'short':
+          levelInstructions = 'Create a very concise summary of the key points. Keep it brief but capture the essential information.';
+          break;
+        case 'medium':
+          levelInstructions = 'Create a balanced summary of the main points and supporting details.';
+          break;
+        case 'detailed':
+          levelInstructions = 'Create a comprehensive summary that captures detailed information, examples, and explanations.';
+          break;
+        default:
+          levelInstructions = 'Create a balanced summary of the main points and supporting details.';
+      }
+      
       final prompt = '''
         The input is a transcribe of a lecture audio.
-        Format the response in the following structure:
+        $levelInstructions
+        Format the response in the following structure using proper markdown headers (# for h1, ## for h2, ### for h3):
         
-        # LECTURE_NOTES
-        [Convert the transcript into lecture notes with markdown format supporting in obsidian.
+        # Lecture Notes
+        [Convert the transcript into lecture notes with markdown format.
+        Use proper markdown headers:
+        - Use # for main sections
+        - Use ## for subsections
+        - Use ### for sub-subsections
+        - Use * or - for bullet points
         Enclose math notation inside \$\$ and code inside backticks.]
 
-        # ACTIONABLE_ITEMS
+        # Actionable Items
         [List any actionable items such as homework, assignments, refer topics or textbook before next lecture, or tests that are mentioned.
         If no actionable items are mentioned, write "No actionable items mentioned in this lecture."]
 
@@ -47,7 +70,7 @@ class GeminiService {
         $transcript
       ''';
 
-      onStageChange?.call('Generating lecture notes');
+      onStageChange?.call('Generating ${summaryLevel} lecture notes');
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
       
