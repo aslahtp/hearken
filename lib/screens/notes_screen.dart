@@ -225,7 +225,7 @@ class NotesScreenState extends State<NotesScreen> {
 
   Future<void> _exportToPdf(Map<String, dynamic> note) async {
     try {
-      // Create PDF document with barebones text-only approach
+      // Create PDF document
       final pdf = pw.Document();
       
       // Get the title and date
@@ -233,55 +233,97 @@ class NotesScreenState extends State<NotesScreen> {
       final createdAt = DateTime.parse(note['created_at'] ?? DateTime.now().toIso8601String());
       final formattedDate = '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}';
       
-      // Get note content
+      // Get content from all tabs
       final noteText = note['notes'] ?? 'No notes available';
+      final actionableText = note['actionable_items'] ?? 'No actionable items available';
+      final transcriptText = note['transcript'] ?? 'No transcript available';
 
-      // Create a text-only PDF with automatic page breaks
+      // Create a PDF with proper markdown rendering and automatic page breaks
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(30),
+          footer: (context) => pw.Container(
+            alignment: pw.Alignment.centerRight,
+            margin: const pw.EdgeInsets.only(top: 10),
+            child: pw.Text('Page ${context.pageNumber} of ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9)
+            ),
+          ),
           build: (context) {
-            // Simple list of widgets for content
             final List<pw.Widget> widgets = [];
             
             // Title
-            widgets.add(pw.Text(
-              title,
-              style: pw.TextStyle(
+            widgets.add(pw.Header(
+              level: 0,
+              child: pw.Text(
+                title,
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ));
+            
+            // Date
+            widgets.add(pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 8),
+              child: pw.Text('Created: $formattedDate',
+                style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic),
+              ),
+            ));
+            
+            // Divider
+            widgets.add(pw.Divider());
+            
+            // Notes section
+            widgets.add(pw.Header(
+              level: 1,
+              text: 'Notes',
+              textStyle: pw.TextStyle(
                 fontSize: 16,
                 fontWeight: pw.FontWeight.bold,
               ),
             ));
             
-            // Date
-            widgets.add(pw.SizedBox(height: 4));
-            widgets.add(pw.Text('Created: $formattedDate',
-              style: const pw.TextStyle(fontSize: 10),
-            ));
+            // Process markdown-like content for notes
+            _processMarkdownContent(widgets, noteText);
             
-            // Divider
-            widgets.add(pw.Divider());
-            widgets.add(pw.SizedBox(height: 8));
+            // Actionable Items section
+            if (actionableText != 'No actionable items available' && 
+                actionableText != 'No actionable items mentioned in this lecture.') {
+              widgets.add(pw.SizedBox(height: 16));
+              widgets.add(pw.Header(
+                level: 1,
+                text: 'Actionable Items',
+                textStyle: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ));
+              
+              // Process markdown-like content for actionable items
+              _processMarkdownContent(widgets, actionableText);
+            }
             
-            // Notes header
-            widgets.add(pw.Text(
-              'Notes',
-              style: pw.TextStyle(
-                fontSize: 14,
+            // Transcript section
+            widgets.add(pw.SizedBox(height: 16));
+            widgets.add(pw.Header(
+              level: 1,
+              text: 'Transcript',
+              textStyle: pw.TextStyle(
+                fontSize: 16,
                 fontWeight: pw.FontWeight.bold,
               ),
             ));
-            widgets.add(pw.SizedBox(height: 8));
             
-            // Break notes into paragraphs for better handling
-            final paragraphs = noteText.split('\n\n');
-            for (var paragraph in paragraphs) {
-              widgets.add(pw.Text(
-                paragraph.trim(),
+            // Add transcript text (split into manageable paragraphs to avoid overflow)
+            final transcriptParagraphs = transcriptText.split('\n\n');
+            for (var paragraph in transcriptParagraphs) {
+              widgets.add(pw.Paragraph(
+                text: paragraph.trim(),
                 style: const pw.TextStyle(fontSize: 10),
               ));
-              widgets.add(pw.SizedBox(height: 4));
             }
             
             return widgets;
@@ -382,6 +424,63 @@ class NotesScreenState extends State<NotesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to generate PDF: ${e.toString()}')),
         );
+      }
+    }
+  }
+
+  // Helper method to process markdown-like content for PDF
+  void _processMarkdownContent(List<pw.Widget> widgets, String markdownText) {
+    // Handle headers
+    final lines = markdownText.split('\n');
+    
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i].trim();
+      
+      if (line.startsWith('# ')) {
+        // H1 header
+        widgets.add(pw.Header(
+          level: 2,
+          text: line.substring(2),
+          textStyle: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ));
+      } else if (line.startsWith('## ')) {
+        // H2 header
+        widgets.add(pw.Header(
+          level: 3,
+          text: line.substring(3),
+          textStyle: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ));
+      } else if (line.startsWith('### ')) {
+        // H3 header
+        widgets.add(pw.Header(
+          level: 4,
+          text: line.substring(4),
+          textStyle: pw.TextStyle(
+            fontSize: 11,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ));
+      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+        // Bullet point
+        widgets.add(pw.Bullet(
+          text: line.substring(2),
+          style: const pw.TextStyle(fontSize: 10),
+        ));
+      } else if (line != '') {
+        // Regular paragraph
+        widgets.add(pw.Paragraph(
+          text: line,
+          style: const pw.TextStyle(fontSize: 10),
+        ));
+      } else if (i > 0 && lines[i-1] != '') {
+        // Empty line after content - add spacing
+        widgets.add(pw.SizedBox(height: 4));
       }
     }
   }
