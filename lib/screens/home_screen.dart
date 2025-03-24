@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     Container(
                       padding: const EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Column(
@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                           Text(
                             'Summary Level:',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.normal,
                             ),
                           ),
                           const SizedBox(height: 8),
